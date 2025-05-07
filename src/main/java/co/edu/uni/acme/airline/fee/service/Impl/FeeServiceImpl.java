@@ -1,16 +1,23 @@
 package co.edu.uni.acme.airline.fee.service.Impl;
 
 import co.edu.uni.acme.aerolinea.commons.dto.FeeDTO;
+import co.edu.uni.acme.aerolinea.commons.dto.FlightDTO;
+import co.edu.uni.acme.aerolinea.commons.dto.ServiceDTO;
 import co.edu.uni.acme.aerolinea.commons.entity.FeeEntity;
 import co.edu.uni.acme.aerolinea.commons.entity.FlightEntity;
+import co.edu.uni.acme.airline.fee.dto.FeeInformationBaseDto;
+import co.edu.uni.acme.airline.fee.dto.FeesFlightDto;
+import co.edu.uni.acme.airline.fee.dto.FeesServiceDto;
 import co.edu.uni.acme.airline.fee.repository.FeeRepository;
 import co.edu.uni.acme.airline.fee.repository.FlightRepository;
 import co.edu.uni.acme.airline.fee.service.IFeeService;
 import co.edu.uni.acme.airline.fee.util.mappers.FeeMapper;
+import co.edu.uni.acme.airline.fee.util.mappers.FlightMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -22,6 +29,8 @@ public class FeeServiceImpl implements IFeeService {
     private final FeeMapper feeMapper;
 
     private final FlightRepository flightRepository;
+
+    private final FlightMapper flightMapper;
 
     @Override
     public List<FeeDTO> getAllFees() {
@@ -54,15 +63,24 @@ public class FeeServiceImpl implements IFeeService {
     }
 
     @Override
-    public List<FeeDTO> getFeesForFlight(String flightCode) {
-        FlightEntity flight = flightRepository.findById(flightCode)
+    public FeesFlightDto getFeesForFlight(String flightCode) {
+        FlightDTO flight = flightRepository.findById(flightCode)
+                .map(flightMapper::entityToDto)
                 .orElseThrow(() -> new IllegalArgumentException("Vuelo no encontrado"));
-
-        LocalDate flightDate = flight.getFlightDate();
-
-        return feeMapper.listEntityToListDto(
-                feeRepository.findAvailableByDate(flightDate)
-        );
+        List<FeeInformationBaseDto> tarifasDisponibles = feeMapper.objectToFeeInformationBase(feeRepository.buscarTarifasVuelos(flight.getCodeFlight()));
+        List<FeesServiceDto> feesServiceDtos = new ArrayList<>();
+        for(FeeInformationBaseDto informationBaseDto : tarifasDisponibles){
+            FeesServiceDto feesServiceDto = new FeesServiceDto();
+            feesServiceDto.setCodigoFee(informationBaseDto.getCodeFee());
+            feesServiceDto.setNameFeeType(informationBaseDto.getNameFeeType());
+            feesServiceDto.setValueFee(informationBaseDto.getValueFee());
+            feesServiceDto.setServices(feeMapper.objectToServiceList(feeRepository.buscarServiciosTarifa(informationBaseDto.getCodeFee())));
+            feesServiceDtos.add(feesServiceDto);
+        }
+        FeesFlightDto feesFlightDto = new FeesFlightDto();
+        feesFlightDto.setCodeFlight(flightCode);
+        feesFlightDto.setFees(feesServiceDtos);
+        return feesFlightDto;
     }
 
     @Override

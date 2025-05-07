@@ -1,6 +1,7 @@
 package co.edu.uni.acme.airline.fee.controller;
 
 import co.edu.uni.acme.aerolinea.commons.dto.FeeDTO;
+import co.edu.uni.acme.airline.fee.dto.FeesFlightDto;
 import co.edu.uni.acme.airline.fee.service.IFeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -41,11 +42,9 @@ public class FeeController {
         return ResponseEntity.ok(feeService.getByFeeType(typeCode));
     }
     @GetMapping("/available-by-flight")
-    public ResponseEntity<List<FeeDTO>> getFeesForFlight(@RequestParam("flightCode") String flightCode) {
-        List<FeeDTO> result = feeService.getFeesForFlight(flightCode);
-        return result.isEmpty()
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(result);
+    public ResponseEntity<FeesFlightDto> getFeesForFlight(@RequestParam("flightCode") String flightCode) {
+        FeesFlightDto result = feeService.getFeesForFlight(flightCode);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/validate")

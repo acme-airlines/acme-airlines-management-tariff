@@ -1,6 +1,7 @@
 package co.edu.uni.acme.airline.fee.service;
 
 import co.edu.uni.acme.aerolinea.commons.dto.FeeDTO;
+import co.edu.uni.acme.airline.fee.dto.FeesFlightDto;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,7 +16,8 @@ public interface IFeeService {
 
     List<FeeDTO> getByFeeType(String feeTypeCode);
 
-    List<FeeDTO> getFeesForFlight(String flightCode);
+    FeesFlightDto getFeesForFlight(String flightCode);
+
     boolean isFeeValidForFlight(String flightCode, String feeCode);
 
 }
