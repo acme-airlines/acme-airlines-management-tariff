@@ -65,7 +65,7 @@ public class CreateServicePassengerService implements ICreateServicePassengerSer
             );
         }
 
-        assignService(passengerCode, ext.getCodeService());
+        assignService(passengerCode, ext.getCodeService(), Long.valueOf(ext.getQuantity()));
         flightExtraRepo.updateQuantity(flightExtra.getQuantity() - requested, flightCode, ext.getCodeService());
     }
 
@@ -82,7 +82,8 @@ public class CreateServicePassengerService implements ICreateServicePassengerSer
     }
 
     private void assignService(String passengerCode,
-                               String serviceCode) {
+                               String serviceCode,
+                               Long quantityService) {
 
         ServicePassengerExtraIdDto idDto =
                 new ServicePassengerExtraIdDto(passengerCode, serviceCode);
@@ -98,6 +99,7 @@ public class CreateServicePassengerService implements ICreateServicePassengerSer
                 .code(passengerCode)
                 .build();
         dto.setPassenger(p);
+        dto.setQuantity(quantityService);
 
         passengerServiceRepo.save(
                 passengerMapper.toEntity(dto)
