@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 import static co.edu.uni.acme.airline.fee.util.constants.Constants.*;
 
@@ -31,12 +32,16 @@ public class CreateServicePassengerService implements ICreateServicePassengerSer
     @Transactional
     public boolean createServicePassenger(ServicePassengerRequestDto request) {
         String flightCode = request.getCodeFlight();
-        List<String> passengerCodes = request.getCodePassengers();
-        List<ServiceExtDto> services   = request.getService();
+        Map<String, List<ServiceExtDto>> servicesMap = request.getServicesByPassenger();
+        Map<String,String> passengerCodes = request.getCodePassengers();
 
-        passengerCodes.forEach(code ->
-                services.forEach(ext -> processAssignment(code, ext, flightCode))
-        );
+        for(String key : passengerCodes.keySet()){
+            String passengerCode  = passengerCodes.get(key);
+            List<ServiceExtDto> servicesForThisPassenger = servicesMap.get(key);
+            servicesForThisPassenger.forEach(ext ->
+                    processAssignment(passengerCode, ext, flightCode)
+            );
+        }
 
         return true;
     }
@@ -60,9 +65,8 @@ public class CreateServicePassengerService implements ICreateServicePassengerSer
             );
         }
 
-        assignService(passengerCode, ext.getCodeService(), flightCode);
-        flightExtra.setQuantity(flightExtra.getQuantity() - requested);
-        flightExtraRepo.save(flightExtraMapper.toEntity(flightExtra));
+        assignService(passengerCode, ext.getCodeService());
+        flightExtraRepo.updateQuantity(flightExtra.getQuantity() - requested, flightCode, ext.getCodeService());
     }
 
     private long parseQuantity(String qty) {
@@ -78,8 +82,7 @@ public class CreateServicePassengerService implements ICreateServicePassengerSer
     }
 
     private void assignService(String passengerCode,
-                               String serviceCode,
-                               String flightCode) {
+                               String serviceCode) {
 
         ServicePassengerExtraIdDto idDto =
                 new ServicePassengerExtraIdDto(passengerCode, serviceCode);
